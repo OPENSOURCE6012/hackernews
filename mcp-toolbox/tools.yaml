@@ -1,0 +1,43 @@
+sources:
+  hackernews-source:
+    kind: bigquery
+    project: endless-empire-472415-f4
+
+tools:
+  list_stories:
+    kind: bigquery-sql
+    source: hackernews-source
+    statement: |
+      SELECT id, title, url, `by`, score, time, timestamp, text
+      FROM `bigquery-public-data.hacker_news`.`full`
+      WHERE type = 'story'
+        AND (dead IS NULL OR dead = FALSE)
+        AND deleted IS NULL
+        AND title IS NOT NULL
+      ORDER BY time DESC
+      LIMIT 100
+    description: |
+      Get the top 100 most recent Hacker News stories.
+      No parameters required. Call this directly for any request about top or recent stories.
+
+  query_comments:
+    kind: bigquery-sql
+    source: hackernews-source
+    statement: |
+      SELECT id, `by`, text, time, timestamp, parent
+      FROM `bigquery-public-data.hacker_news`.`full`
+      WHERE type = 'comment'
+        AND parent = {{parent_id}}
+        AND deleted IS NULL
+      LIMIT 100
+    description: |
+      Get comments for a specific story by parent ID.
+    parameters:
+      - name: parent_id
+        type: integer
+        description: The story ID to fetch comments for
+
+toolsets:
+  hackernews_tools:
+    - list_stories
+    - query_comments
